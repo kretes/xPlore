@@ -8,8 +8,10 @@ This project uses your Location History (exported from Google) and a configured 
 It as well uses Google API to select points that lays on roads, as this is the best approximation of a 'publicly accessible point' that I found.
 
 This is how it looks like for me on a city-scale (This shows all the places that I've never been closer than 300 meters from - in the circle of 9 km around my place):
-![Zrzut ekranu 2023-03-16 o 09 43 58](https://user-images.githubusercontent.com/1224887/225571627-d3074d91-5fb4-44be-98d2-7da5891abb22.png)
-You can see I've explored all the area close and along the N-S routes, but much less farther West or East.
+![Zrzut ekranu 2023-03-16 o 10 24 05](https://user-images.githubusercontent.com/1224887/225572800-1927a872-2985-4739-b627-e78e211623ff.png)
+
+
+You can see I've explored all the area close and along the N-S routes, but much less farther East or South-West.
 
 ## How to use it
 
