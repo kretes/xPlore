@@ -9,7 +9,7 @@ from haversine import haversine, haversine_vector, Unit
 import folium
 
 
-def create_knn(visited_points: list[Tuple[float, float]], points_excluded_from_exploration: list[Tuple[float, float]]) -> NearestNeighbors:
+def create_knn(visited_points: np.array, points_excluded_from_exploration: list[Tuple[float, float]]) -> NearestNeighbors:
     """
     Creates and fits a KNN model to a concatenation of visited points and excluded from exploration.
     Both sets of files are treated in the same way, since we want them to mean 'this point is not a candidate for exploration'
@@ -17,7 +17,10 @@ def create_knn(visited_points: list[Tuple[float, float]], points_excluded_from_e
     :param points_excluded_from_exploration:
     :return:
     """
-    X = np.vstack([visited_points, points_excluded_from_exploration * 2])
+    points = visited_points
+    if points_excluded_from_exploration:
+        points = np.vstack([points, points_excluded_from_exploration * 2])
+    X = np.array(points)
 
     knn = NearestNeighbors(n_neighbors=30)
 

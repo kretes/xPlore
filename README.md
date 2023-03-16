@@ -37,6 +37,8 @@ CENTER_POINT = (51.945969, 19.535312) # Lat-long coordinates of a center point t
 RADIUS_SIZE_KM = 5 # Radius of the circle around the center point (in kilometers)
 ```
 
+Furthermore you need to export your google location history using Google Takeout and put the zip file in `{DATA_DIR}/takeouts` dir.
+
 ## Limitations
 
 This is a side project I wrote for fun, and it might have some bugs.

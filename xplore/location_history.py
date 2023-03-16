@@ -83,7 +83,7 @@ def generate_points_in_areas(areas: list[Tuple[Tuple[float, float], Tuple[float,
 def read_points_excluded_from_exploration(data_dir: str, grid_spacing_m: int) -> list[Tuple[float, float]]:
     """
     Reads from `data_dir / excluded_from_exploration.json` and generates a list of points that are excluded from exploration.
-    The result is a cocnatenation of:
+    The result is a concatenation of:
         `private_points` collection read from the file
         points generated from both `private_areas` and `manual_visited_areas`
             - generation is just creating a point in grid with spacing equal to `grid_spacing_m // 2`
@@ -92,6 +92,9 @@ def read_points_excluded_from_exploration(data_dir: str, grid_spacing_m: int) ->
     :return: list of points that should be excluded from exploration
     """
 
-    with open(Path(data_dir) / "excluded_from_exploration.json") as f:
-        data = json.load(f)
-    return data["private_points"] + generate_points_in_areas(data["private_areas"] + data["manual_visited_areas"], grid_spacing_m // 2)
+    excluded_from_exploration_path = Path(data_dir) / "excluded_from_exploration.json"
+    if excluded_from_exploration_path.exists():
+        with open(excluded_from_exploration_path) as f:
+            data = json.load(f)
+        return data.get("private_points", []) + generate_points_in_areas(data.get("private_areas", []) + data.get("manual_visited_areas", []), grid_spacing_m // 2)
+    return []
