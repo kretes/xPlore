@@ -24,6 +24,10 @@ and install dependencies `pip install pandas more-itertools scikit-learn geopy h
 
 To run from scratch it requires a Google Cloud API Key that you need to provide. There is some free usage for this API that I've always relied on personally. See [Google API pricing](https://developers.google.com/maps/documentation/roads/usage-and-billing).
 
+## Beta-users support
+
+I would really love to see someone else running this code. I offer support to the first users as well as - I can use my GCP account to e.g. call GCP API and generate a file with road points, that's needed for it to work.
+
 ## Configuration
 
 The notebook contains the following cell with configuration, so that you can taylor it for your own need:
