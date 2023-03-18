@@ -62,3 +62,7 @@ Google Roads API is usually not returning paths/trails in nature. that's why som
 ## Disclaimer
 
 THIS SOFTWARE IS PROVIDED AS-IS. NO WARRANTY PROVIDED, THE AUTHORS AREN'T LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+## Code quality disclaimer 
+
+This is a pet-project and a no-risk one. This is how I justify low quality of this code e.g. lack of unit tests. The code should be readable and the overall design is understandable - just - this is not a production-level code that I use to write professionally.
