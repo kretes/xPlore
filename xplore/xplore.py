@@ -7,6 +7,8 @@ import numpy as np
 from haversine import haversine, haversine_vector, Unit
 
 import folium
+from jinja2 import Template
+from folium.map import Marker
 
 
 def create_knn(visited_points: np.array, points_excluded_from_exploration: list[Tuple[float, float]]) -> NearestNeighbors:
@@ -87,6 +89,34 @@ def get_non_visited_road_points(knn: NearestNeighbors, road_points: list[Tuple[f
     return points_to_display
 
 
+def setup_marker_template():
+    """
+    See https://stackoverflow.com/questions/74707544/add-a-clickevent-function-to-multiple-folium-markers-with-python
+    :return:
+    """
+    # Modify Marker template to include the onClick event
+    click_template = """{% macro script(this, kwargs) %}
+        var {{ this.get_name() }} = L.marker(
+            {{ this.location|tojson }},
+            {{ this.options|tojson }}
+        ).addTo({{ this._parent.get_name() }}).on('click', onClick);
+    {% endmacro %}"""
+
+    # Change template to custom template
+    Marker._template = Template(click_template)
+
+def add_js_on_click_to_map(m: folium.Map):
+    # Create the onClick listener function as a branca element and add to the map html
+    click_js = """function onClick(e) {
+                     var point = e.latlng;   navigator.clipboard.writeText(point.lat + ',' + point.lng);
+                     }"""
+
+    e = folium.Element(click_js)
+    html = m.get_root()
+    html.script.get_root().render()
+    html.script._children[e.get_name()] = e
+
+
 def show_map_with_points(center_point: Tuple[float, float], points: list[Tuple[float, float]]) -> folium.Map:
     """
     Shows Folium Map with `points`
@@ -94,7 +124,11 @@ def show_map_with_points(center_point: Tuple[float, float], points: list[Tuple[f
     :param points:
     :return:
     """
+    setup_marker_template()
+
     m = folium.Map(location=center_point, zoom_start=12)
+
+    add_js_on_click_to_map(m)
     folium.Marker(center_point, icon=folium.Icon(color="green")).add_to(m)
 
     for point in points:
