@@ -1,5 +1,5 @@
 from operator import itemgetter
-from typing import Tuple
+from typing import Tuple, Optional
 
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
@@ -85,8 +85,9 @@ def get_non_visited_road_points(knn: NearestNeighbors, road_points: list[Tuple[f
                                                    road_points_with_dist_above]
     points_to_display_with_distance_from_center = sorted(points_to_display_with_distance_from_center, key=itemgetter(1))
     points_to_display = [x[0] for x in points_to_display_with_distance_from_center]
+    distances_to_points = [x[1] for x in points_to_display_with_distance_from_center]
 
-    return points_to_display
+    return points_to_display, distances_to_points
 
 
 def setup_marker_template():
@@ -95,7 +96,7 @@ def setup_marker_template():
     :return:
     """
     # Modify Marker template to include the onClick event
-    click_template = """{% macro script(this, kwargs) %}
+    marker_template = """{% macro script(this, kwargs) %}
         var {{ this.get_name() }} = L.marker(
             {{ this.location|tojson }},
             {{ this.options|tojson }}
@@ -103,12 +104,21 @@ def setup_marker_template():
     {% endmacro %}"""
 
     # Change template to custom template
-    Marker._template = Template(click_template)
+    Marker._template = Template(marker_template)
 
+    circle_marker_template = """{% macro script(this, kwargs) %}
+            var {{ this.get_name() }} = L.circleMarker(
+                {{ this.location|tojson }},
+                {{ this.options|tojson }}
+            ).addTo({{ this._parent.get_name() }}).on('click', onClick);
+        {% endmacro %}"""
+    folium.CircleMarker._template = Template(circle_marker_template)
+
+# navigator.clipboard.writeText(point.lat + ',' + point.lng);
 def add_js_on_click_to_map(m: folium.Map):
     # Create the onClick listener function as a branca element and add to the map html
     click_js = """function onClick(e) {
-                     var point = e.latlng;   navigator.clipboard.writeText(point.lat + ',' + point.lng);
+                     var point = e.latlng;   console.log('[' + point.lat + ',' + point.lng + ']'); 
                      }"""
 
     e = folium.Element(click_js)
@@ -117,7 +127,10 @@ def add_js_on_click_to_map(m: folium.Map):
     html.script._children[e.get_name()] = e
 
 
-def show_map_with_points(center_point: Tuple[float, float], points: list[Tuple[float, float]]) -> folium.Map:
+def show_map_with_points(center_point: Tuple[float, float],
+                         points_list: list[list[Tuple[float, float]]],
+                         colors: list[str],
+                         radiuses: Optional[list[float]] = None) -> folium.Map:
     """
     Shows Folium Map with `points`
     :param center_point:
@@ -131,11 +144,22 @@ def show_map_with_points(center_point: Tuple[float, float], points: list[Tuple[f
     add_js_on_click_to_map(m)
     folium.Marker(center_point, icon=folium.Icon(color="green")).add_to(m)
 
-    for point in points:
-        folium.Marker(point).add_to(m)
+    for points, color in zip(points_list, colors):
+        if radiuses is None:
+            radiuses = [None] * len(points)
+        for point, radius in zip(points, radiuses):
+            if radius is None:
+                if len(point) > 2:
+                    radius = point[2]
+                else:
+                    radius = 100
+            point = point[:2]
+            folium.CircleMarker(point, radius=2, fill_color=color, fill_opacity=0.4, color=color, weight=1).add_to(m)
+            folium.vector_layers.Circle(point, radius=radius, fill_color=color, fill_opacity=0.1, opacity=0.2, color=color, weight=1).add_to(m)
+           
 
-    min_point = np.array(points).min(axis=0).tolist()
-    max_point = np.array(points).max(axis=0).tolist()
+    min_point = np.array(points_list[0]).min(axis=0).tolist()
+    max_point = np.array(points_list[0]).max(axis=0).tolist()
 
     m.fit_bounds([min_point, max_point])
 

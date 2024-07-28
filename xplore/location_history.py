@@ -1,6 +1,7 @@
 import zipfile
 import json
-from typing import Tuple
+from typing import Tuple, Dict
+import json5
 
 import numpy as np
 import pandas as pd
@@ -16,8 +17,9 @@ def read_location_history_dir(data_dir: str) -> np.array:
     :return: 2D Array [N_Points, 2] with unique points' coordinates
     """
 
-    zip_path = list((Path(data_dir) / "takeouts").glob("*.zip"))[0]
-    return read_location_history_zip(zip_path)
+    zip_paths = sorted([str(p) for p in list((Path(data_dir) / "takeouts").glob("*.zip"))])
+    print(zip_paths[-1])
+    return read_location_history_zip(zip_paths[-1])
 
 
 def read_location_history_zip(zip_path: str) -> np.array:
@@ -28,22 +30,60 @@ def read_location_history_zip(zip_path: str) -> np.array:
     """
     with zipfile.ZipFile(zip_path) as z:
         for name in z.namelist():
-            if name.endswith("json"):
+            if name.endswith("Records.json"):
                 with z.open(name) as f:
                     data = json.loads(f.read())
-                    if "locations" in data:
-                        print("json loaded...")
-                        df = pd.DataFrame(data["locations"])
-
-                        all_unique_coords = df[["latitudeE7", "longitudeE7"]].drop_duplicates().reset_index(drop=True)
-
-                        X = all_unique_coords.values / 1e7
-
-                        print(f"read {len(X)} unique locations")
-
-                        return X
+                    return read_location_history_from_data(data)
 
     return None
+
+def read_location_history_from_data(data: Dict) -> np.array:
+    if "locations" in data:
+        print("json loaded...")
+        df = pd.DataFrame(data["locations"]).sort_values("timestamp")
+        print(df.columns)
+
+        all_unique_coords = df[["latitudeE7", "longitudeE7", "timestamp"]].drop_duplicates(("latitudeE7", "longitudeE7"), keep="last").reset_index(drop=True)
+
+        all_unique_coords["latitudeE7"] = all_unique_coords["latitudeE7"] / 1e7
+        all_unique_coords["longitudeE7"] = all_unique_coords["longitudeE7"] / 1e7
+
+        all_unique_coords = all_unique_coords[~(np.any(np.isnan(all_unique_coords[["latitudeE7", "longitudeE7"]]), axis=1))]
+
+        X = all_unique_coords.values
+
+        # X = X[~(np.any(np.isnan(X[:,2]), axis=1))]
+
+        print(f"read {len(X)} unique locations")
+
+        return X
+    return None
+
+
+def add_initial_history(data_dir, list_of_points):
+    rp = Path(data_dir) / "rolling_points.json"
+    if rp.exists():
+        with open(rp, "r") as f:            
+            initial_history = json.load(f)
+    else:
+        zip_path = Path(data_dir) / "takeout_initial.zip"
+        initial_history = read_location_history_zip(zip_path)
+        
+    ccs = set([tuple(cc) for cc in list_of_points])
+    entries_to_add = []
+    for entry in initial_history:
+        if tuple(entry) not in ccs:
+            entries_to_add.append(entry)
+    print(f"adding {len(entries_to_add)} entries that google_takout missed")
+    if len(entries_to_add) > 0:
+        result = np.concatenate([list_of_points, entries_to_add])
+        with open(Path(data_dir) / "rolling_points_backup.json",  "w") as f:
+            json.dump(result.tolist(), f)
+        with open(rp,  "w") as f:
+            json.dump(result.tolist(), f)
+        return result
+    else:
+        return list_of_points
 
 
 def generate_points_in_areas(areas: list[Tuple[Tuple[float, float], Tuple[float, float]]], grid_spacing_m: int) -> list[Tuple[float, float]]:
@@ -95,6 +135,6 @@ def read_points_excluded_from_exploration(data_dir: str, grid_spacing_m: int) ->
     excluded_from_exploration_path = Path(data_dir) / "excluded_from_exploration.json"
     if excluded_from_exploration_path.exists():
         with open(excluded_from_exploration_path) as f:
-            data = json.load(f)
+            data = json5.load(f)
         return data.get("private_points", []) + generate_points_in_areas(data.get("private_areas", []) + data.get("manual_visited_areas", []), grid_spacing_m // 2)
     return []

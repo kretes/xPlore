@@ -78,7 +78,7 @@ def get_road_points(grid_points: Collection[tuple[float]], MAX_REQUESTS: int, GO
     return all_grid_to_road_points
 
 
-def get_grid_and_road_points(center_point: Tuple[float, float], radius_size_km: int, grid_spacing_m: int, data_dir: str, max_requests: int, GOOGLE_API_KEY: str) -> Dict[str, list[Tuple[float, float]]]:
+def get_grid_and_road_points(center_point: Tuple[float, float], radius_size_km: int, grid_spacing_m: int, data_dir: str, max_requests: int, GOOGLE_API_KEY: str, cache_version="_202307") -> Dict[str, list[Tuple[float, float]]]:
     """
     Creates a grid of points around given `center_point` and reads a cached Google API data for mapping to roads.
     For each missing point - Google API is called and cached file is updated.
@@ -93,7 +93,8 @@ def get_grid_and_road_points(center_point: Tuple[float, float], radius_size_km: 
     :param GOOGLE_API_KEY:
     :return:
     """
-    grid_to_road_file_name = f"grid_to_road_cache_center_{center_point[0]}_{center_point[1]}_radius_{radius_size_km}_spacing_{grid_spacing_m}.json"
+    grid_to_road_file_name = f"grid_to_road_cache_center_{center_point[0]}_{center_point[1]}_spacing_{grid_spacing_m}{cache_version}.json"
+    print(grid_to_road_file_name)
     grid_to_road_path = Path(data_dir) / "grid_to_road_cache" / grid_to_road_file_name
     grid_points_in_scope = generate_grid_points_in_radius(center_point, radius_size_km, grid_spacing_m)
     print(
