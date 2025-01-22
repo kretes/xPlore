@@ -1,3 +1,7 @@
+# Squadrats
+
+I stopped working on this, as I found [squadrats](https://squadrats.com/) which I use now for same purpose. Recommended!
+
 # xPlore - find hiking/biking/walking places that you've never been around!
 
 Ever wondered 'I know my city very well, I've been everywhere', or 'I've been biking through this district for ages, I visited every corner there'.
